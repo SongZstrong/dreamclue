@@ -1,0 +1,218 @@
+[
+  {
+    "id": 1,
+    "header": "Flying above a dark lake",
+    "type": "Symbolic",
+    "status": "Interpreted",
+    "target": "6",
+    "limit": "8",
+    "reviewer": "DreamClue Analyst"
+  },
+  {
+    "id": 2,
+    "header": "Lost in a childhood house",
+    "type": "Memory",
+    "status": "In Review",
+    "target": "5",
+    "limit": "7",
+    "reviewer": "Symbol Researcher"
+  },
+  {
+    "id": 3,
+    "header": "Teeth falling before a speech",
+    "type": "Anxiety",
+    "status": "Interpreted",
+    "target": "4",
+    "limit": "6",
+    "reviewer": "Journal Editor"
+  },
+  {
+    "id": 4,
+    "header": "A locked blue door",
+    "type": "Recurring",
+    "status": "Draft",
+    "target": "3",
+    "limit": "5",
+    "reviewer": "Assign guide"
+  },
+  {
+    "id": 5,
+    "header": "Running through a silent train station",
+    "type": "Emotional",
+    "status": "In Review",
+    "target": "7",
+    "limit": "8",
+    "reviewer": "Sleep Pattern Guide"
+  },
+  {
+    "id": 6,
+    "header": "Speaking with a late relative",
+    "type": "Memory",
+    "status": "Interpreted",
+    "target": "5",
+    "limit": "9",
+    "reviewer": "DreamClue Analyst"
+  },
+  {
+    "id": 7,
+    "header": "Ocean waves entering the bedroom",
+    "type": "Symbolic",
+    "status": "Interpreted",
+    "target": "8",
+    "limit": "9",
+    "reviewer": "Symbol Researcher"
+  },
+  {
+    "id": 8,
+    "header": "Being chased through a city market",
+    "type": "Nightmare",
+    "status": "In Review",
+    "target": "6",
+    "limit": "8",
+    "reviewer": "Journal Editor"
+  },
+  {
+    "id": 9,
+    "header": "Finding a moonlit garden",
+    "type": "Symbolic",
+    "status": "Interpreted",
+    "target": "4",
+    "limit": "7",
+    "reviewer": "DreamClue Analyst"
+  },
+  {
+    "id": 10,
+    "header": "Lucid dream of opening windows",
+    "type": "Lucid",
+    "status": "Interpreted",
+    "target": "5",
+    "limit": "8",
+    "reviewer": "Sleep Pattern Guide"
+  },
+  {
+    "id": 11,
+    "header": "Missing an exam in an old school",
+    "type": "Anxiety",
+    "status": "In Review",
+    "target": "6",
+    "limit": "7",
+    "reviewer": "Symbol Researcher"
+  },
+  {
+    "id": 12,
+    "header": "A white bird landing on the hand",
+    "type": "Symbolic",
+    "status": "Draft",
+    "target": "3",
+    "limit": "6",
+    "reviewer": "Assign guide"
+  },
+  {
+    "id": 13,
+    "header": "Elevator moving sideways",
+    "type": "Recurring",
+    "status": "In Review",
+    "target": "5",
+    "limit": "7",
+    "reviewer": "DreamClue Analyst"
+  },
+  {
+    "id": 14,
+    "header": "Walking barefoot in snow",
+    "type": "Emotional",
+    "status": "Interpreted",
+    "target": "4",
+    "limit": "6",
+    "reviewer": "Journal Editor"
+  },
+  {
+    "id": 15,
+    "header": "Phone call with no voice",
+    "type": "Emotional",
+    "status": "Draft",
+    "target": "4",
+    "limit": "5",
+    "reviewer": "Assign guide"
+  },
+  {
+    "id": 16,
+    "header": "Climbing stairs that never end",
+    "type": "Recurring",
+    "status": "In Review",
+    "target": "7",
+    "limit": "9",
+    "reviewer": "Sleep Pattern Guide"
+  },
+  {
+    "id": 17,
+    "header": "Finding a hidden room behind a mirror",
+    "type": "Symbolic",
+    "status": "Interpreted",
+    "target": "6",
+    "limit": "8",
+    "reviewer": "Symbol Researcher"
+  },
+  {
+    "id": 18,
+    "header": "Falling slowly into warm light",
+    "type": "Lucid",
+    "status": "Interpreted",
+    "target": "5",
+    "limit": "7",
+    "reviewer": "DreamClue Analyst"
+  },
+  {
+    "id": 19,
+    "header": "A clock melting on the kitchen table",
+    "type": "Symbolic",
+    "status": "In Review",
+    "target": "5",
+    "limit": "8",
+    "reviewer": "Journal Editor"
+  },
+  {
+    "id": 20,
+    "header": "Searching for a child in a museum",
+    "type": "Memory",
+    "status": "Draft",
+    "target": "6",
+    "limit": "7",
+    "reviewer": "Assign guide"
+  },
+  {
+    "id": 21,
+    "header": "House lights turning on by themselves",
+    "type": "Recurring",
+    "status": "Interpreted",
+    "target": "4",
+    "limit": "6",
+    "reviewer": "Sleep Pattern Guide"
+  },
+  {
+    "id": 22,
+    "header": "Crossing a bridge made of glass",
+    "type": "Anxiety",
+    "status": "In Review",
+    "target": "5",
+    "limit": "8",
+    "reviewer": "DreamClue Analyst"
+  },
+  {
+    "id": 23,
+    "header": "Receiving a letter with blank pages",
+    "type": "Symbolic",
+    "status": "Draft",
+    "target": "3",
+    "limit": "5",
+    "reviewer": "Assign guide"
+  },
+  {
+    "id": 24,
+    "header": "Standing under two moons",
+    "type": "Lucid",
+    "status": "Interpreted",
+    "target": "6",
+    "limit": "9",
+    "reviewer": "Symbol Researcher"
+  }
+]
