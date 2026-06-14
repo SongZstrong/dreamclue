@@ -27,11 +27,27 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
+.claude
+quick-admin.js
+set-admin.js
 # local uploads and generated data
 uploads/
 data/
-docs/
+
+# local agent/editor
+.claude/
+
+# local-only notes and one-off admin scripts
+AGENTS.md
+CURRENT_IMPLEMENTATION.md
+docs/*.md
+scripts/
+create-admin-final.sql
+create-admin-fixed.sql
+create-admin.sh
+create-admin.sql
+run-sql.sh
+
 # OS / editor
 .DS_Store
 .idea/
@@ -43,8 +59,9 @@ __pycache__/
 
 script/
 
-#多余的脚本和文件
+#scripts
 AGENTS.md
+
 create-admin-final.sql
 create-admin-fixed.sql
 create-admin.sh

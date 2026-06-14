@@ -19,13 +19,6 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "list-contacts": "tsx scripts/list-contacts.ts",
-    "list-users": "tsx scripts/list-users.ts",
-    "fix-payments": "tsx scripts/fix-payments.ts",
-    "fix-payments-scene": "tsx scripts/fix-payments-scene.ts",
-    "stripe:check": "tsx scripts/check-stripe-config.ts",
-    "stripe:setup": "tsx scripts/setup-stripe-products.ts",
-    "distribute-credits": "tsx scripts/distribute-credits.ts",
     "content": "fumadocs-mdx",
     "email": "email dev --dir src/mail/templates --port 3333",
     "knip": "knip"
