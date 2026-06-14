@@ -31,7 +31,7 @@ pnpm-debug.log*
 # local uploads and generated data
 uploads/
 data/
-
+docs/
 # OS / editor
 .DS_Store
 .idea/
@@ -42,3 +42,12 @@ __pycache__/
 *.py[cod]
 
 script/
+
+#多余的脚本和文件
+AGENTS.md
+create-admin-final.sql
+create-admin-fixed.sql
+create-admin.sh
+create-admin.sql
+CURRENT_IMPLEMENTATION.md
+run-sql.sh
