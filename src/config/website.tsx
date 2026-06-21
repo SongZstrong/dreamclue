@@ -48,8 +48,10 @@ export const websiteConfig: WebsiteConfig = {
     enable: process.env.NEXT_PUBLIC_DEMO_WEBSITE === 'true',
   },
   auth: {
-    enableGoogleLogin: true,
-    enableGithubLogin: true,
+    enableGoogleLogin:
+      !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET,
+    enableGithubLogin:
+      !!process.env.GITHUB_CLIENT_ID && !!process.env.GITHUB_CLIENT_SECRET,
     enableCredentialLogin: true,
     enableDeleteUser: true,
   },
@@ -79,8 +81,9 @@ export const websiteConfig: WebsiteConfig = {
   mail: {
     enable: true,
     provider: 'resend',
-    fromEmail: 'DreamClue AI <support@example.com>',
-    supportEmail: 'support@example.com',
+    fromEmail:
+      process.env.RESEND_FROM_EMAIL || 'DreamClue AI <support@dreamclueai.com>',
+    supportEmail: process.env.SUPPORT_EMAIL || 'support@dreamclueai.com',
   },
   newsletter: {
     enable: true,

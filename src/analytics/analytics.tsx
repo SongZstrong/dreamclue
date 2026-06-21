@@ -1,5 +1,4 @@
 import { websiteConfig } from '@/config/website';
-import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AhrefsAnalytics } from './ahrefs-analytics';
 import ClarityAnalytics from './clarity-analytics';
@@ -49,10 +48,6 @@ export function Analytics() {
 
       {/* clarity analytics */}
       <ClarityAnalytics />
-
-      {/* vercel analytics */}
-      {/* https://vercel.com/docs/analytics/quickstart */}
-      {websiteConfig.analytics.enableVercelAnalytics && <VercelAnalytics />}
 
       {/* speed insights */}
       {/* https://vercel.com/docs/speed-insights/quickstart */}

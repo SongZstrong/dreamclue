@@ -46,19 +46,46 @@ export async function searchLexicalDocuments(
       chunk_id: number;
       created_at: string;
       lexical_score: number;
+      language: string | null;
+      source_type: string | null;
+      section_title: string | null;
+      section_path: string | null;
+      symbol_terms: string[] | null;
+      tags: string[] | null;
+      chunk_type: string | null;
+      token_count: number | null;
+      quality_score: number | null;
+      is_active: boolean | null;
+      source_weight: number | null;
+      metadata: Record<string, unknown> | null;
     }[]
   >`
     select
-      id,
-      file_id,
-      file_name,
-      title,
-      text,
-      chunk_id,
-      created_at,
-      ts_rank_cd(search_vector, to_tsquery('simple', ${tsQuery})) as lexical_score
-    from knowledge_chunks
-    where search_vector @@ to_tsquery('simple', ${tsQuery})
+      k.id,
+      k.file_id,
+      k.file_name,
+      k.title,
+      k.text,
+      k.chunk_id,
+      k.created_at,
+      k.language,
+      k.source_type,
+      k.section_title,
+      k.section_path,
+      k.symbol_terms,
+      k.tags,
+      k.chunk_type,
+      k.token_count,
+      k.quality_score,
+      k.is_active,
+      k.metadata,
+      coalesce(f.source_weight, 1) as source_weight,
+      ts_rank_cd(k.search_vector, to_tsquery('simple', ${tsQuery})) as lexical_score
+    from knowledge_chunks k
+    left join knowledge_files f on f.id = k.file_id
+    where k.search_vector @@ to_tsquery('simple', ${tsQuery})
+      and coalesce(k.is_active, true) = true
+      and coalesce(f.is_active, true) = true
     order by lexical_score desc
     limit ${topK}
   `;
@@ -74,5 +101,19 @@ export async function searchLexicalDocuments(
     created_at: row.created_at,
     lexicalScore: Number(row.lexical_score),
     sourceChannel: 'lexical',
+    language: row.language,
+    source_type: row.source_type,
+    section_title: row.section_title,
+    section_path: row.section_path,
+    symbol_terms: row.symbol_terms || [],
+    tags: row.tags || [],
+    chunk_type: row.chunk_type,
+    token_count: row.token_count,
+    quality_score:
+      typeof row.quality_score === 'number' ? Number(row.quality_score) : 1,
+    is_active: row.is_active ?? true,
+    source_weight:
+      typeof row.source_weight === 'number' ? Number(row.source_weight) : 1,
+    metadata: row.metadata || {},
   }));
 }

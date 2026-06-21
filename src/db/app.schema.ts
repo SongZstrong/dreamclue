@@ -3,7 +3,9 @@ import {
   customType,
   index,
   integer,
+  jsonb,
   pgTable,
+  real,
   text,
   timestamp,
   uniqueIndex,
@@ -98,6 +100,17 @@ export const dreams = pgTable("dreams", {
 	dreamsCreatedAtIdx: index("dreams_created_at_idx").on(table.createdAt),
 }));
 
+export const dreamAnalysisUsage = pgTable("dream_analysis_usage", {
+	id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+	userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+	dreamId: text("dream_id").notNull().references(() => dreams.id, { onDelete: 'cascade' }),
+	createdAt: timestamp("created_at", { mode: 'date' }).notNull().defaultNow(),
+}, (table) => ({
+	dreamAnalysisUsageUserIdIdx: index("dream_analysis_usage_user_id_idx").on(table.userId),
+	dreamAnalysisUsageDreamIdIdx: index("dream_analysis_usage_dream_id_idx").on(table.dreamId),
+	dreamAnalysisUsageCreatedAtIdx: index("dream_analysis_usage_created_at_idx").on(table.createdAt),
+}));
+
 export const knowledgeFiles = pgTable("knowledge_files", {
 	id: text("id").primaryKey().$defaultFn(() => randomUUID()),
 	userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
@@ -111,6 +124,19 @@ export const knowledgeFiles = pgTable("knowledge_files", {
 	status: text("status").notNull().default('pending'), // pending, processing, completed, failed
 	chunkCount: integer("chunk_count"),
 	errorMessage: text("error_message"),
+	sourceUrl: text("source_url"),
+	sourceType: text("source_type"),
+	language: text("language"),
+	license: text("license"),
+	copyrightStatus: text("copyright_status"),
+	sourceWeight: real("source_weight").default(1),
+	isActive: boolean("is_active").default(true),
+	checksum: text("checksum"),
+	parserVersion: text("parser_version"),
+	chunkerVersion: text("chunker_version"),
+	embeddingModel: text("embedding_model"),
+	embeddingDimension: integer("embedding_dimension").default(4096),
+	metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
 	processedAt: timestamp("processed_at", { mode: 'date' }),
 	createdAt: timestamp("created_at", { mode: 'date' }).notNull().defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: 'date' }).notNull().defaultNow(),
@@ -143,10 +169,27 @@ export const knowledgeChunks = pgTable("knowledge_chunks", {
 	start: integer("start").notNull(),
 	end: integer("end").notNull(),
 	embedding: vector4096("embedding").notNull(),
+	language: text("language"),
+	sourceType: text("source_type"),
+	sectionTitle: text("section_title"),
+	sectionPath: text("section_path"),
+	symbolTerms: text("symbol_terms").array(),
+	tags: text("tags").array(),
+	chunkType: text("chunk_type"),
+	tokenCount: integer("token_count"),
+	qualityScore: real("quality_score").default(1),
+	isActive: boolean("is_active").default(true),
+	metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
 	createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 }, (table) => ({
 	knowledgeChunksFileIdIdx: index("knowledge_chunks_file_id_idx").on(table.fileId),
 	knowledgeChunksCreatedAtIdx: index("knowledge_chunks_created_at_idx").on(table.createdAt),
+	knowledgeChunksChunkTypeIdx: index("knowledge_chunks_chunk_type_idx").on(table.chunkType),
+	knowledgeChunksActiveIdx: index("knowledge_chunks_active_idx").on(
+		table.isActive,
+		table.sourceType,
+		table.chunkType
+	),
 	knowledgeChunksFileChunkIdx: uniqueIndex("knowledge_chunks_file_chunk_idx").on(
 		table.fileId,
 		table.chunkId

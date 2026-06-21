@@ -1,10 +1,17 @@
 import { getDb, withDbConnectionRetry } from '@/db';
 import { knowledgeFiles } from '@/db/schema';
+import { createHash } from 'crypto';
 import { eq } from 'drizzle-orm';
-import { chunkText, getChunkingConfig } from './chunker';
+import { cleanTextBySource } from './cleaners';
+import { chunkByDreamProfile } from './dream-chunker';
 import { embedBatch } from './embedder';
 import { parseFile } from './parsers';
-import { replaceDocumentsForFile } from './vector-store';
+import {
+  CHUNKER_VERSION,
+  PARSER_VERSION,
+  getSourceConfigForFile,
+} from './source-manifest';
+import { replaceDocumentsForFileWithMetadata } from './vector-store';
 
 type Logger = Pick<typeof console, 'error' | 'log' | 'warn'>;
 
@@ -15,6 +22,15 @@ interface StartProcessingResult {
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Processing failed';
+}
+
+function getEmbeddingDimension(): number {
+  const parsed = Number.parseInt(process.env.EMBEDDING_DIMENSION || '4096', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 4096;
+}
+
+function checksumText(text: string): string {
+  return createHash('sha256').update(text).digest('hex');
 }
 
 export async function startKnowledgeFileProcessing(
@@ -86,16 +102,32 @@ export async function processKnowledgeFile(
   const text = await parseFile(file.filePath);
   logger.log(`✅ 解析完成,文本长度: ${text.length}`);
 
-  logger.log('✂️ 分块文本...');
-  const chunkingConfig = getChunkingConfig();
-  const chunks = chunkText(
-    text,
-    chunkingConfig.chunkSize,
-    chunkingConfig.overlap,
-    chunkingConfig.minChunkSize
+  const sourceConfig = getSourceConfigForFile(file.fileName, file.title);
+
+  logger.log('🧹 清洗文本...');
+  const cleanReport = cleanTextBySource(text, sourceConfig);
+  logger.log('✅ 清洗完成:', {
+    rawChars: cleanReport.rawChars,
+    cleanChars: cleanReport.cleanChars,
+    removedBlocks: cleanReport.removedBlocks,
+    noiseRatio: cleanReport.noiseRatio,
+    warnings: cleanReport.warnings,
+  });
+
+  logger.log('✂️ 按梦境资料 profile 分块...');
+  const chunks = chunkByDreamProfile(
+    cleanReport.cleanText,
+    sourceConfig,
+    cleanReport
   );
-  logger.log('📐 分块参数:', chunkingConfig);
-  logger.log(`✅ 分块完成,共 ${chunks.length} 块`);
+  logger.log('📐 分块 profile:', {
+    parserProfile: sourceConfig.parserProfile,
+    chunkProfile: sourceConfig.chunkProfile,
+    sourceType: sourceConfig.sourceType,
+  });
+  logger.log(
+    `✅ 分块完成,共 ${chunks.length} 块, active ${chunks.filter((chunk) => chunk.isActive).length} 块`
+  );
 
   if (chunks.length === 0) {
     throw new Error('No chunks created');
@@ -109,12 +141,13 @@ export async function processKnowledgeFile(
   logger.log('✅ 向量生成完成');
 
   logger.log('💾 存储到向量数据库...');
-  const chunkCount = await replaceDocumentsForFile(
+  const chunkCount = await replaceDocumentsForFileWithMetadata(
     chunks,
     embeddings,
     file.id,
     file.fileName,
-    file.title || undefined
+    sourceConfig.title || file.title || undefined,
+    sourceConfig
   );
   logger.log('✅ 向量存储完成');
 
@@ -125,6 +158,28 @@ export async function processKnowledgeFile(
       .set({
         status: 'completed',
         chunkCount,
+        sourceUrl: sourceConfig.sourceUrl || null,
+        sourceType: sourceConfig.sourceType,
+        language: sourceConfig.language,
+        license: sourceConfig.license,
+        copyrightStatus: sourceConfig.copyrightStatus,
+        sourceWeight: sourceConfig.sourceWeight,
+        isActive: true,
+        checksum: checksumText(text),
+        parserVersion: PARSER_VERSION,
+        chunkerVersion: CHUNKER_VERSION,
+        embeddingModel:
+          process.env.EMBEDDING_MODEL || 'Qwen/Qwen3-Embedding-8B',
+        embeddingDimension: getEmbeddingDimension(),
+        metadata: {
+          parserProfile: sourceConfig.parserProfile,
+          chunkProfile: sourceConfig.chunkProfile,
+          rawChars: cleanReport.rawChars,
+          cleanChars: cleanReport.cleanChars,
+          removedBlocks: cleanReport.removedBlocks,
+          noiseRatio: cleanReport.noiseRatio,
+          warnings: cleanReport.warnings,
+        },
         processedAt: new Date(),
         errorMessage: null,
         updatedAt: new Date(),

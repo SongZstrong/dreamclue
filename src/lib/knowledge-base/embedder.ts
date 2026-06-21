@@ -43,6 +43,10 @@ const EMBEDDING_RETRY_BASE_DELAY_MS = Number.parseInt(
   process.env.KNOWLEDGE_EMBED_RETRY_BASE_DELAY_MS || '800',
   10
 );
+const EMBEDDING_TIMEOUT_MS = Number.parseInt(
+  process.env.KNOWLEDGE_EMBED_TIMEOUT_MS || '60000',
+  10
+);
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -67,19 +71,37 @@ function getEmbeddingEndpoint(): string {
 }
 
 async function requestEmbeddings(texts: string[]): Promise<number[][]> {
-  const response = await fetch(getEmbeddingEndpoint(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getApiKey()}`,
-    },
-    body: JSON.stringify({
-      model: EMBEDDING_MODEL,
-      input: texts,
-      encoding_format: 'float',
-      dimensions: EMBEDDING_DIMENSION,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), EMBEDDING_TIMEOUT_MS);
+  let response: Response;
+
+  try {
+    response = await fetch(getEmbeddingEndpoint(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getApiKey()}`,
+      },
+      body: JSON.stringify({
+        model: EMBEDDING_MODEL,
+        input: texts,
+        encoding_format: 'float',
+        dimensions: EMBEDDING_DIMENSION,
+      }),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new EmbeddingRequestError(
+        `SiliconFlow embedding request timed out after ${EMBEDDING_TIMEOUT_MS}ms`,
+        408
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const payload = (await response.json()) as EmbeddingResponse;
 

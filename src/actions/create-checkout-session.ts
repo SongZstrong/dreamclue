@@ -1,7 +1,7 @@
 'use server';
 
 import { websiteConfig } from '@/config/website';
-import { findPlanByPlanId } from '@/lib/price-plan';
+import { findPlanByPlanId, findPriceInPlan } from '@/lib/price-plan';
 import { userActionClient } from '@/lib/safe-action';
 import { validateStripeCheckoutConfig } from '@/lib/stripe-config';
 import { getUrlWithLocale } from '@/lib/urls';
@@ -40,6 +40,14 @@ export const createCheckoutAction = userActionClient
         return {
           success: false,
           error: 'Price plan not found',
+        };
+      }
+
+      const price = findPriceInPlan(planId, priceId);
+      if (!price) {
+        return {
+          success: false,
+          error: 'Price does not belong to the selected plan',
         };
       }
 

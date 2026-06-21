@@ -5,11 +5,29 @@ const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL ??
   `http://localhost:${process.env.PORT ?? 3000}`;
 
+const emailBaseUrl = process.env.AUTH_EMAIL_BASE_URL ?? baseUrl;
+
 /**
  * Get the base URL of the application
  */
 export function getBaseUrl(): string {
   return baseUrl;
+}
+
+export function getEmailAuthUrl(url: string): string {
+  try {
+    const sourceUrl = new URL(url);
+    const targetOrigin = new URL(emailBaseUrl).origin;
+    const targetUrl = new URL(
+      sourceUrl.pathname + sourceUrl.search,
+      targetOrigin
+    );
+
+    return targetUrl.toString();
+  } catch (error) {
+    console.warn('Failed to apply email auth base URL:', url, error);
+    return url;
+  }
 }
 
 /**

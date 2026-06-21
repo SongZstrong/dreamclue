@@ -1,4 +1,13 @@
 import type { RerankedSearchResult } from './reranker';
+import {
+  type KnowledgeAnalysisSection,
+  type PublicCitation,
+  buildPublicCitations,
+  getAnswerModelLabel,
+  getKnowledgeDisclaimer,
+  parseAnswerSections,
+  selectAnswerContextResults,
+} from './public-report';
 
 const BAILIAN_BASE_URL =
   process.env.BAILIAN_BASE_URL || 'https://dashscope.aliyuncs.com';
@@ -6,19 +15,14 @@ const SILICONFLOW_BASE_URL =
   process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn';
 const CHAT_DEFAULT_MODEL = process.env.CHAT_DEFAULT_MODEL || 'qwen3-max';
 
-export interface AnswerCitation {
-  id: string;
-  title: string;
-  fileName: string;
-  chunkId: number;
-  excerpt: string;
-}
-
 export interface GeneratedKnowledgeAnswer {
   content: string;
   model: string;
+  modelLabel: string;
   provider: 'bailian' | 'siliconflow';
-  citations: AnswerCitation[];
+  sections: KnowledgeAnalysisSection[];
+  citations: PublicCitation[];
+  disclaimer: string;
 }
 
 interface ChatResponse {
@@ -41,10 +45,6 @@ interface ChatResponse {
 }
 
 type ChatContent = string | Array<{ text?: string }> | undefined;
-
-function truncateExcerpt(text: string, maxLength: number = 180): string {
-  return text.length <= maxLength ? text : `${text.slice(0, maxLength)}...`;
-}
 
 function getChatProvider(model: string): 'bailian' | 'siliconflow' {
   if (model.startsWith('Pro/') || model.toLowerCase().includes('glm')) {
@@ -99,6 +99,7 @@ function buildSystemPrompt(locale: string): string {
       '请给出克制、清晰、可读的解释，并在关键判断后用 [1]、[2] 这样的编号引用来源。',
       '如果文献之间存在差异，要明确指出差异，不要强行合并。',
       '不要把梦境解释成绝对事实，应以“可能”“倾向于”“文献中常见观点”为表达方式。',
+      '铁律：如果检索结果中只有传统梦书/占梦资料，而没有 psychoanalytic、modern_sleep_science 或 curated_symbol 中的现代解释，请在“心理学/现代视角”部分明确说明：“当前知识库暂未收录该意象的现代心理学解释。”绝不允许自行编造心理学理论。',
     ].join('\n');
   }
 
@@ -108,18 +109,34 @@ function buildSystemPrompt(locale: string): string {
     'Write clearly, keep nuance, and cite important claims with [1], [2] style references.',
     'If sources disagree, explain the disagreement explicitly.',
     'Do not present dream interpretation as absolute fact; use cautious language such as "may", "can suggest", or "is commonly interpreted as".',
+    'Hard rule: if the retrieved passages only contain traditional dream-book material and no psychoanalytic, modern_sleep_science, or curated_symbol modern interpretation, state in the psychology/modern section that the current knowledge base has not collected a modern psychological interpretation for this symbol. Never invent psychological theory.',
   ].join('\n');
+}
+
+function hasModernInterpretation(results: RerankedSearchResult[]): boolean {
+  return results.some((result) =>
+    ['psychoanalytic', 'modern_sleep_science', 'curated_symbol'].includes(
+      result.source_type || ''
+    )
+  );
 }
 
 function buildUserPrompt(
   query: string,
   locale: string,
-  citations: AnswerCitation[]
+  citations: PublicCitation[],
+  hasModernSources: boolean
 ): string {
   const context = citations
-    .map(
-      (citation, index) =>
-        `[${index + 1}] ${citation.title} | ${citation.fileName} | chunk ${citation.chunkId}\n${citation.excerpt}`
+    .map((citation) =>
+      [
+        `[${citation.index}] ${citation.sourceTitle} · ${citation.entryTitle}`,
+        locale.startsWith('zh')
+          ? `来源类型：${citation.sourceTypeLabel}`
+          : `Source type: ${citation.sourceTypeLabel}`,
+        locale.startsWith('zh') ? '核心原文：' : 'Relevant passage:',
+        citation.quote,
+      ].join('\n')
     )
     .join('\n\n');
 
@@ -130,11 +147,20 @@ function buildUserPrompt(
       '参考文献片段：',
       context,
       '',
-      '请输出：',
-      '1. 一个直接回答',
-      '2. 两到三个关键解释点',
-      '3. 如有必要，补充不同文献视角的差异',
-      '4. 在引用依据时使用 [1]、[2] 这样的编号',
+      hasModernSources
+        ? '现代资料状态：已检索到现代/心理学相关资料。'
+        : '现代资料状态：未检索到 psychoanalytic、modern_sleep_science 或 curated_symbol 现代解释资料。',
+      '',
+      '请严格按以下结构输出，不要改标题：',
+      '直接解释',
+      '传统梦书视角',
+      '心理学/现代视角',
+      '可能关联的现实情绪',
+      '不同来源的差异',
+      '参考来源',
+      '',
+      '如果现代资料状态为未检索到现代解释资料，必须在“心理学/现代视角”部分写出：“当前知识库暂未收录该意象的现代心理学解释。”',
+      '所有关键判断必须使用 [1]、[2] 这样的编号引用来源。',
     ].join('\n');
   }
 
@@ -144,11 +170,20 @@ function buildUserPrompt(
     'Reference passages:',
     context,
     '',
-    'Please provide:',
-    '1. A direct answer',
-    '2. Two or three key interpretation points',
-    '3. Differences across sources when relevant',
-    '4. Citations using [1], [2] style references',
+    hasModernSources
+      ? 'Modern source status: modern/psychological material was retrieved.'
+      : 'Modern source status: no psychoanalytic, modern_sleep_science, or curated_symbol modern interpretation was retrieved.',
+    '',
+    'Use exactly these section headings:',
+    'Direct Interpretation',
+    'Traditional Dream-Book View',
+    'Psychology / Modern View',
+    'Possible Real-Life Emotions',
+    'Differences Across Sources',
+    'References',
+    '',
+    'If the modern source status says no modern interpretation was retrieved, explicitly say in the Psychology / Modern View section that the current knowledge base has not collected a modern psychological interpretation for this symbol.',
+    'Use [1], [2] style citations for important claims.',
   ].join('\n');
 }
 
@@ -157,11 +192,13 @@ export async function generateKnowledgeAnswer({
   results,
   locale,
   contextTopK,
+  queryTerms = [],
 }: {
   query: string;
   results: RerankedSearchResult[];
   locale: string;
   contextTopK: number;
+  queryTerms?: string[];
 }): Promise<GeneratedKnowledgeAnswer | null> {
   if (results.length === 0) {
     return null;
@@ -175,15 +212,13 @@ export async function generateKnowledgeAnswer({
     return null;
   }
 
-  const citations: AnswerCitation[] = results
-    .slice(0, contextTopK)
-    .map((result) => ({
-      id: result.id,
-      title: result.title,
-      fileName: result.file_name,
-      chunkId: result.chunk_id,
-      excerpt: truncateExcerpt(result.text),
-    }));
+  const contextResults = selectAnswerContextResults({
+    results,
+    queryTerms,
+    limit: contextTopK,
+  });
+  const citations = buildPublicCitations(contextResults, locale, queryTerms);
+  const hasModernSources = hasModernInterpretation(contextResults);
 
   const response = await fetch(getChatEndpoint(provider), {
     method: 'POST',
@@ -200,7 +235,7 @@ export async function generateKnowledgeAnswer({
         },
         {
           role: 'user',
-          content: buildUserPrompt(query, locale, citations),
+          content: buildUserPrompt(query, locale, citations, hasModernSources),
         },
       ],
       temperature: 0.5,
@@ -230,7 +265,10 @@ export async function generateKnowledgeAnswer({
   return {
     content,
     model,
+    modelLabel: getAnswerModelLabel(locale),
     provider,
+    sections: parseAnswerSections(content, locale),
     citations,
+    disclaimer: getKnowledgeDisclaimer(locale),
   };
 }

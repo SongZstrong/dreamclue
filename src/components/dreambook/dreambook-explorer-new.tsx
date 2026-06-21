@@ -2,36 +2,22 @@
 
 import { searchKnowledgeAction } from '@/actions';
 import { LocaleLink } from '@/i18n/navigation';
+import type {
+  KnowledgeAnalysisSection,
+  PublicCitation,
+  PublicKnowledgeResult,
+} from '@/lib/knowledge-base/public-report';
 import { Routes } from '@/routes';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import styles from './dreambook-explorer.module.css';
 
-interface SearchResult {
-  id: string;
-  file_id: string;
-  file_name: string;
-  title: string;
-  text: string;
-  chunk_id: number;
-  similarity: number;
-  created_at: string;
-  relevanceScore?: number;
-}
-
-interface AnswerCitation {
-  id: string;
-  title: string;
-  fileName: string;
-  chunkId: number;
-  excerpt: string;
-}
-
 interface GeneratedAnswer {
   content: string;
-  model: string;
-  provider: 'bailian' | 'siliconflow';
-  citations: AnswerCitation[];
+  modelLabel: string;
+  sections: KnowledgeAnalysisSection[];
+  citations: PublicCitation[];
+  disclaimer: string;
 }
 
 interface UsageInfo {
@@ -104,7 +90,7 @@ export function DreambookExplorer() {
   const locale = useLocale();
 
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<PublicKnowledgeResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -183,7 +169,7 @@ export function DreambookExplorer() {
         </div>
 
         <div className={styles.searchContainer}>
-          <div className={styles.searchGlow} />
+          <div className={styles.searchGlow} aria-hidden="true" />
           <form
             className={styles.searchBox}
             onSubmit={(event) => {
@@ -279,39 +265,84 @@ export function DreambookExplorer() {
                 <h2 className={styles.answerHeading}>{t('analysisTitle')}</h2>
               </div>
               <span className={styles.answerModel}>
-                {t('answerModel', { model: answer.model })}
+                {answer.modelLabel || t('answerModel')}
               </span>
             </div>
 
             <div className={styles.answerBody}>
-              {answer.content
-                .split('\n')
-                .map((paragraph, index) =>
-                  paragraph.trim() ? (
-                    <p key={`${index}-${paragraph.slice(0, 12)}`}>
-                      {paragraph}
-                    </p>
-                  ) : null
-                )}
+              {(answer.sections?.length
+                ? answer.sections.filter(
+                    (section) => section.key !== 'references'
+                  )
+                : [
+                    {
+                      key: 'direct',
+                      title: t('directSection'),
+                      content: answer.content,
+                      citationIds: [],
+                    },
+                  ]
+              ).map((section) => (
+                <section key={section.key} className={styles.answerSection}>
+                  <div className={styles.answerSectionHeader}>
+                    <h3>{section.title}</h3>
+                    {section.citationIds.length > 0 && (
+                      <span className={styles.answerSectionRefs}>
+                        {section.citationIds
+                          .map((citationId) => `[${citationId}]`)
+                          .join(' ')}
+                      </span>
+                    )}
+                  </div>
+                  {section.content
+                    .split('\n')
+                    .map((paragraph, index) =>
+                      paragraph.trim() ? (
+                        <p key={`${section.key}-${index}`}>
+                          {paragraph.trim()}
+                        </p>
+                      ) : null
+                    )}
+                </section>
+              ))}
             </div>
+
+            <p className={styles.answerDisclaimer}>
+              {answer.disclaimer || t('disclaimer')}
+            </p>
 
             {answer.citations.length > 0 && (
               <div className={styles.answerSources}>
                 <h3>{t('answerSourcesTitle')}</h3>
                 <div className={styles.answerSourcesList}>
-                  {answer.citations.map((citation, index) => (
+                  {answer.citations.map((citation) => (
                     <div key={citation.id} className={styles.answerSourceItem}>
                       <div className={styles.answerSourceMeta}>
                         <span className={styles.answerSourceIndex}>
-                          [{index + 1}]
+                          [{citation.index}]
                         </span>
                         <span className={styles.answerSourceTitle}>
-                          {citation.title}
+                          {citation.sourceTitle}
+                          {citation.entryTitle
+                            ? ` · ${citation.entryTitle}`
+                            : ''}
                         </span>
                       </div>
-                      <p className={styles.answerSourceExcerpt}>
-                        {citation.excerpt}
+                      <p className={styles.answerSourceType}>
+                        {citation.sourceTypeLabel}
                       </p>
+                      <blockquote className={styles.answerSourceQuote}>
+                        {citation.quote}
+                      </blockquote>
+                      {citation.matchedTerms.length > 0 && (
+                        <div className={styles.cardTags}>
+                          {citation.matchedTerms.map((term) => (
+                            <span key={term} className={styles.tag}>
+                              {term}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -338,26 +369,35 @@ export function DreambookExplorer() {
                 className={styles.dreamCard}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className={styles.cardGlow} />
+                <div className={styles.cardGlow} aria-hidden="true" />
                 <div className={styles.cardContent}>
                   <div className={styles.cardMeta}>
-                    <span className={styles.cardDate}>{match.title}</span>
+                    <span className={styles.cardDate}>{match.sourceTitle}</span>
                     <div className={styles.cardSimilarity}>
                       <SparklesIcon className={styles.cardSimilarityIcon} />
                       <span>
-                        {typeof match.relevanceScore === 'number'
-                          ? t('relevance', {
-                              value: Math.round(match.relevanceScore * 100),
-                            })
-                          : t('similarity', {
-                              value: Math.round((1 - match.similarity) * 100),
-                            })}
+                        {t('relevance', {
+                          value: Math.round(match.relevance * 100),
+                        })}
                       </span>
                     </div>
                   </div>
-                  <p className={styles.cardInterpretation}>{match.text}</p>
+                  <h3 className={styles.cardDream}>{match.entryTitle}</h3>
+                  <p className={styles.relatedSourceType}>
+                    {match.sourceTypeLabel}
+                  </p>
+                  <blockquote className={styles.relatedQuote}>
+                    {match.quote}
+                  </blockquote>
+                  {match.summary && match.summary !== match.quote && (
+                    <p className={styles.cardInterpretation}>{match.summary}</p>
+                  )}
                   <div className={styles.cardTags}>
-                    <span className={styles.tag}>{match.file_name}</span>
+                    {match.matchedTerms.map((term) => (
+                      <span key={term} className={styles.tag}>
+                        {term}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>

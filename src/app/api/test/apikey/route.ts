@@ -7,6 +7,10 @@ import { NextResponse } from 'next/server';
  * Test verify an API key
  */
 export async function POST(request: Request) {
+  if (process.env.NEXT_PUBLIC_DEMO_WEBSITE !== 'true') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const body = await request.json();
     const { key } = body as { key?: string };

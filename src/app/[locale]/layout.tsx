@@ -10,6 +10,7 @@ import PromotekitScript from '@/components/affiliate/promotekit';
 import { TailwindIndicator } from '@/components/layout/tailwind-indicator';
 import { routing } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/next';
 import { type Locale, NextIntlClientProvider, hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -70,6 +71,7 @@ export default async function LocaleLayout({
               <Toaster richColors position="top-right" offset={64} />
               <TailwindIndicator />
               <Analytics />
+              <VercelAnalytics />
             </Providers>
           </NextIntlClientProvider>
         </NuqsAdapter>

@@ -15,7 +15,11 @@ import { admin, bearer } from 'better-auth/plugins';
 import { parse as parseCookies } from 'cookie';
 import type { Locale } from 'next-intl';
 import { getAllPricePlans } from './price-plan';
-import { getBaseUrl, getUrlWithLocaleInCallbackUrl } from './urls';
+import {
+  getBaseUrl,
+  getEmailAuthUrl,
+  getUrlWithLocaleInCallbackUrl,
+} from './urls';
 
 /**
  * Better Auth configuration
@@ -48,14 +52,17 @@ export const auth = betterAuth({
     // https://discord.com/channels/1300839113142046730/1300839113594769431/1454280549060444393
     enabled: websiteConfig.auth.enableCredentialLogin ?? false,
     // https://www.better-auth.com/docs/concepts/email#2-require-email-verification
-    // 临时禁用邮件验证以便快速测试
-    requireEmailVerification: false,
+    requireEmailVerification: true,
+    minPasswordLength: 8,
     // https://www.better-auth.com/docs/authentication/email-password#forget-password
     async sendResetPassword({ user, url }, request) {
       const locale = getLocaleFromRequest(request);
-      const localizedUrl = getUrlWithLocaleInCallbackUrl(url, locale);
+      const localizedUrl = getUrlWithLocaleInCallbackUrl(
+        getEmailAuthUrl(url),
+        locale
+      );
 
-      await sendEmail({
+      const result = await sendEmail({
         to: user.email,
         template: 'forgotPassword',
         context: {
@@ -64,17 +71,27 @@ export const auth = betterAuth({
         },
         locale,
       });
+
+      if (!result.success) {
+        throw new Error('Password reset email could not be sent');
+      }
     },
   },
   emailVerification: {
     // https://www.better-auth.com/docs/concepts/email#auto-signin-after-verification
     autoSignInAfterVerification: true,
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    expiresIn: 60 * 60 * 24,
     // https://www.better-auth.com/docs/authentication/email-password#require-email-verification
     sendVerificationEmail: async ({ user, url, token }, request) => {
       const locale = getLocaleFromRequest(request);
-      const localizedUrl = getUrlWithLocaleInCallbackUrl(url, locale);
+      const localizedUrl = getUrlWithLocaleInCallbackUrl(
+        getEmailAuthUrl(url),
+        locale
+      );
 
-      await sendEmail({
+      const result = await sendEmail({
         to: user.email,
         template: 'verifyEmail',
         context: {
@@ -83,19 +100,31 @@ export const auth = betterAuth({
         },
         locale,
       });
+
+      if (!result.success) {
+        throw new Error('Verification email could not be sent');
+      }
     },
   },
   socialProviders: {
-    // https://www.better-auth.com/docs/authentication/github
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    },
-    // https://www.better-auth.com/docs/authentication/google
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    },
+    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+      ? {
+          // https://www.better-auth.com/docs/authentication/github
+          github: {
+            clientId: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+          },
+        }
+      : {}),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? {
+          // https://www.better-auth.com/docs/authentication/google
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          },
+        }
+      : {}),
   },
   account: {
     // https://www.better-auth.com/docs/concepts/users-accounts#account-linking

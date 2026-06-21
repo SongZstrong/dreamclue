@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { dreams } from '@/db/schema';
 import { useAnalyzeDream } from '@/hooks/use-journal';
+import {
+  getKnowledgeDisclaimer,
+  parseAnswerSections,
+} from '@/lib/knowledge-base/public-report';
 import { BrainCircuit } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -17,6 +21,11 @@ export function AIAnalysisSection({ dream }: AIAnalysisSectionProps) {
   const t = useTranslations('Dreams');
   const locale = useLocale();
   const analyzeDream = useAnalyzeDream();
+  const sections = dream.aiAnalysis
+    ? parseAnswerSections(dream.aiAnalysis, locale).filter(
+        (section) => section.key !== 'references'
+      )
+    : [];
   const dateFormatter = new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
   });
@@ -85,9 +94,29 @@ export function AIAnalysisSection({ dream }: AIAnalysisSectionProps) {
           })}
         </p>
       )}
-      <div className="prose prose-sm dark:prose-invert max-w-none">
-        <p className="text-muted-foreground whitespace-pre-wrap">
-          {dream.aiAnalysis}
+      <div className="space-y-4">
+        {sections.length > 0 ? (
+          sections.map((section) => (
+            <section key={section.key} className="space-y-2">
+              <h4 className="text-sm font-medium">{section.title}</h4>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                {section.content
+                  .split('\n')
+                  .map((paragraph, index) =>
+                    paragraph.trim() ? (
+                      <p key={`${section.key}-${index}`}>{paragraph.trim()}</p>
+                    ) : null
+                  )}
+              </div>
+            </section>
+          ))
+        ) : (
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+            {dream.aiAnalysis}
+          </p>
+        )}
+        <p className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          {getKnowledgeDisclaimer(locale)}
         </p>
       </div>
     </div>

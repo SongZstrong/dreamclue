@@ -67,9 +67,14 @@ export const RegisterForm = ({
     email: z.email({
       message: t('emailRequired'),
     }),
-    password: z.string().min(1, {
-      message: t('passwordRequired'),
-    }),
+    password: z
+      .string()
+      .min(1, {
+        message: t('passwordRequired'),
+      })
+      .min(8, {
+        message: t('passwordMinLength'),
+      }),
     name: z.string().min(1, {
       message: t('nameRequired'),
     }),
@@ -147,6 +152,15 @@ export const RegisterForm = ({
           // sign up success, user information stored in ctx.data
           // console.log("register, success:", ctx.data);
           setSuccess(t('checkEmail'));
+          form.reset({
+            email: values.email,
+            password: '',
+            name: values.name,
+            captchaToken: '',
+          });
+          if (captchaConfigured) {
+            resetCaptcha();
+          }
 
           // add affonso affiliate when provider is affonso
           // https://affonso.io/app/affiliate-program/connect
@@ -160,6 +174,23 @@ export const RegisterForm = ({
         onError: (ctx) => {
           // sign up fail, display the error message
           // console.error('register, error:', ctx.error);
+          if (ctx.error.message === 'User already exists. Use another email.') {
+            setError(t('accountExists'));
+            if (captchaConfigured) {
+              resetCaptcha();
+            }
+            return;
+          }
+          if (
+            ctx.error.message === 'Password is too short' ||
+            ctx.error.message === 'Password too short'
+          ) {
+            setError(t('passwordMinLength'));
+            if (captchaConfigured) {
+              resetCaptcha();
+            }
+            return;
+          }
           setError(`${ctx.error.status}: ${ctx.error.message}`);
           // Reset captcha on registration error
           if (captchaConfigured) {

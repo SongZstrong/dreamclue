@@ -6,20 +6,29 @@ import type {
 } from '../types';
 
 /**
- * OpenAI provider implementation for dream analysis
+ * OpenAI-compatible provider implementation for dream analysis.
+ * Default production setup uses Bailian's compatible endpoint with qwen3-max.
  */
 export class OpenAIProvider implements AIProvider {
   private client: OpenAI;
   private model: string;
 
   constructor() {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.BAILIAN_API_KEY || process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is not set');
+      throw new Error(
+        'BAILIAN_API_KEY or OPENAI_API_KEY environment variable is not set'
+      );
     }
 
-    this.client = new OpenAI({ apiKey });
-    this.model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    const baseURL = getCompatibleBaseUrl();
+
+    this.client = new OpenAI({
+      apiKey,
+      ...(baseURL ? { baseURL } : {}),
+    });
+    this.model =
+      process.env.CHAT_DEFAULT_MODEL || process.env.OPENAI_MODEL || 'qwen3-max';
   }
 
   public getProviderName(): string {
@@ -60,7 +69,7 @@ export class OpenAIProvider implements AIProvider {
 
       return { analysis };
     } catch (error) {
-      console.error('OpenAI dream analysis error:', error);
+      console.error('Dream analysis provider error:', error);
       throw new Error(
         error instanceof Error ? error.message : 'Failed to analyze dream'
       );
@@ -93,4 +102,16 @@ Keep the analysis concise (3-4 paragraphs) and supportive.`;
 
     return prompt;
   }
+}
+
+function getCompatibleBaseUrl(): string | undefined {
+  const baseUrl = process.env.BAILIAN_BASE_URL?.trim();
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
+  return normalizedBaseUrl.endsWith('/compatible-mode/v1')
+    ? normalizedBaseUrl
+    : `${normalizedBaseUrl}/compatible-mode/v1`;
 }

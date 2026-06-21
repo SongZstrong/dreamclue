@@ -92,6 +92,20 @@
       "when": 1779552000000,
       "tag": "0012_green_query_router",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1781827200000,
+      "tag": "0013_knowledge_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1781879040000,
+      "tag": "0014_dream_analysis_usage",
+      "breakpoints": true
     }
   ]
 }

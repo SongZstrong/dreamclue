@@ -1,10 +1,29 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/db';
 import { user } from '@/db/schema';
+import { auth } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { email, role } = body;
 
@@ -15,9 +34,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!['admin', 'user'].includes(role)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid role' },
+        { status: 400 }
+      );
+    }
+
     const db = await getDb();
 
-    // 更新用户角色
     const [updatedUser] = await db
       .update(user)
       .set({ role, updatedAt: new Date() })

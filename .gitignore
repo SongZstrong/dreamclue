@@ -68,3 +68,5 @@ create-admin.sh
 create-admin.sql
 CURRENT_IMPLEMENTATION.md
 run-sql.sh
+.vercel
+requirment.txt

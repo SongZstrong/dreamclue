@@ -149,6 +149,13 @@ export const LoginForm = ({
         },
         onError: (ctx) => {
           // console.error('login, error:', ctx.error);
+          if (ctx.error.message === 'Email not verified') {
+            setSuccess(t('emailNotVerified'));
+            if (captchaConfigured) {
+              resetCaptcha();
+            }
+            return;
+          }
           setError(`${ctx.error.status}: ${ctx.error.message}`);
           // Reset captcha on login error
           if (captchaConfigured) {

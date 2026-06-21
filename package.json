@@ -21,6 +21,8 @@
     "db:studio": "drizzle-kit studio",
     "content": "fumadocs-mdx",
     "email": "email dev --dir src/mail/templates --port 3333",
+    "knowledge:rebuild": "tsx scripts/rebuild-knowledge-base.ts",
+    "knowledge:eval": "tsx scripts/evaluate-knowledge-base.ts",
     "knip": "knip"
   },
   "dependencies": {

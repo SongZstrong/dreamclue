@@ -43,6 +43,13 @@ export const createCreditCheckoutSession = userActionClient
         };
       }
 
+      if (creditPackage.price.priceId !== priceId) {
+        return {
+          success: false,
+          error: 'Price does not belong to the selected credit package',
+        };
+      }
+
       if (websiteConfig.payment.provider === 'stripe') {
         const stripeConfigError = validateStripeCheckoutConfig(priceId);
         if (stripeConfigError) {

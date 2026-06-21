@@ -74,8 +74,8 @@
       "description": "开始记录私人梦境，并体验基础解析。",
       "features": {
         "feature-1": "私人梦境日记",
-        "feature-2": "每天 3 次 AI 梦境解析",
-        "feature-3": "每天 1 次梦之书检索",
+        "feature-2": "全站 1 次免费 AI 能力体验",
+        "feature-3": "包含梦之书检索或梦境 AI 分析",
         "feature-4": "心情与标签追踪"
       },
       "limits": {
@@ -204,13 +204,15 @@
     "placeholder": "输入你的梦境，让我们一起探索它的含义",
     "search": "搜索",
     "loading": "正在搜索相似的梦境...",
-    "resultsTitle": "找到 {count} 个相似梦境",
+    "resultsTitle": "找到 {count} 条相关参考",
     "similarity": "{value}% 相似",
     "relevance": "{value}% 相关",
-    "analysisTitle": "AI 深度分析",
+    "analysisTitle": "Dreamclueai 深度分析",
     "answerTitle": "综合回答",
     "answerSourcesTitle": "引用片段",
-    "answerModel": "由 {model} 生成",
+    "answerModel": "由大模型生成",
+    "directSection": "直接解释",
+    "disclaimer": "Dreamclueai 的分析由大模型结合知识库检索生成，可能存在遗漏、误读或不准确内容。结果仅供文化阅读、自我反思和娱乐参考，不构成医学、心理治疗、法律或事实判断建议。",
     "answerUnavailable": "已返回检索结果，但 AI 综合回答暂时不可用。",
     "emptyText": "输入你的梦境，开始探索...",
     "sections": {
@@ -224,12 +226,12 @@
       "relation": "关系匹配"
     },
     "noResults": "未找到相关内容",
-    "limitReached": "已达到每日查询限制。免费用户每天可使用 {limit} 次梦之书检索。",
-    "upgradePrompt": "您今天的免费梦之书检索次数已用完。升级到 Pro 版本可享受无限次查询。",
+    "limitReached": "免费 AI 使用次数已用完。免费用户全站可使用 {limit} 次 AI 能力。",
+    "upgradePrompt": "您的免费 AI 使用次数已用完。升级到 Pro 版本可无限使用 AI 分析和梦之书检索。",
     "viewPricing": "查看定价",
-    "freeUserHint": "免费用户每天可查询 {limit} 次。升级到 Pro 享受无限查询。",
-    "freeUsageHint": "今日免费用量：{count}/{limit}，剩余 {remaining} 次。",
-    "unlimitedAccess": "✨ 您拥有无限查询权限",
+    "freeUserHint": "免费用户全站可使用 {limit} 次 AI 能力。升级到 Pro 可无限使用。",
+    "freeUsageHint": "免费 AI 用量：{count}/{limit}，剩余 {remaining} 次。",
+    "unlimitedAccess": "✨ 您拥有无限 AI 使用权限",
     "signInRequired": "请登录后使用梦之书",
     "signInPrompt": "登录后可使用免费梦之书检索，并保存你的梦境探索记录。",
     "signInAction": "登录"
@@ -263,6 +265,7 @@
       "or": "或以社媒账号登录",
       "emailRequired": "请输入邮箱",
       "passwordRequired": "请输入密码",
+      "emailNotVerified": "邮箱尚未验证。我们已重新发送验证邮件，请检查您的邮箱。",
       "captchaInvalid": "验证码验证失败",
       "captchaError": "验证码验证出错"
     },
@@ -280,6 +283,8 @@
       "nameRequired": "请输入姓名",
       "emailRequired": "请输入邮箱",
       "passwordRequired": "请输入密码",
+      "passwordMinLength": "密码必须至少包含 8 个字符",
+      "accountExists": "该邮箱已注册，请直接登录。",
       "captchaInvalid": "验证码验证失败",
       "captchaError": "验证码验证出错"
     },
@@ -1131,12 +1136,12 @@
       "neutral": "中性"
     },
     "analysis": {
-      "title": "AI 分析",
-      "analyzing": "正在分析你的梦境...",
+      "title": "Dreamclueai 深度分析",
+      "analyzing": "正在基于知识库分析你的梦境...",
       "reanalyze": "重新分析",
-      "notAnalyzed": "这个梦境还没有被分析",
+      "notAnalyzed": "这个梦境还没有进行知识库 AI 分析",
       "analyzedOn": "分析时间：{date}",
-      "limitReached": "您今天的 {limit} 次免费 AI 梦境解析已用完。升级到 Pro 可享受无限解析。"
+      "limitReached": "您的 {limit} 次免费 AI 使用次数已用完。升级到 Pro 可无限使用 AI 分析。"
     },
     "actions": {
       "view": "查看",
