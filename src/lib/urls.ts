@@ -1,23 +1,66 @@
 import { LOCALES, routing } from '@/i18n/routing';
 import type { Locale } from 'next-intl';
 
-const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL ??
-  `http://localhost:${process.env.PORT ?? 3000}`;
+function normalizeBaseUrl(url?: string | null): string | undefined {
+  const trimmedUrl = url?.trim();
+  if (!trimmedUrl) {
+    return undefined;
+  }
 
-const emailBaseUrl = process.env.AUTH_EMAIL_BASE_URL ?? baseUrl;
+  const urlWithProtocol = /^https?:\/\//.test(trimmedUrl)
+    ? trimmedUrl
+    : `https://${trimmedUrl}`;
+
+  return urlWithProtocol.replace(/\/+$/, '');
+}
+
+function getConfiguredBaseUrl(): string | undefined {
+  return normalizeBaseUrl(
+    process.env.BETTER_AUTH_URL ??
+      process.env.BETTER_AUTH_BASE_URL ??
+      process.env.NEXT_PUBLIC_BASE_URL ??
+      process.env.NEXT_PUBLIC_BETTER_AUTH_URL ??
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+      process.env.VERCEL_URL
+  );
+}
+
+function isLocalBaseUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Get the base URL of the application
  */
 export function getBaseUrl(): string {
-  return baseUrl;
+  const configuredBaseUrl = getConfiguredBaseUrl();
+
+  if (typeof window !== 'undefined') {
+    if (
+      configuredBaseUrl &&
+      (!isLocalBaseUrl(configuredBaseUrl) ||
+        isLocalBaseUrl(window.location.origin))
+    ) {
+      return configuredBaseUrl;
+    }
+
+    return window.location.origin;
+  }
+
+  return configuredBaseUrl ?? `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
 export function getEmailAuthUrl(url: string): string {
   try {
     const sourceUrl = new URL(url);
-    const targetOrigin = new URL(emailBaseUrl).origin;
+    const targetOrigin = new URL(
+      normalizeBaseUrl(process.env.AUTH_EMAIL_BASE_URL) ?? getBaseUrl()
+    ).origin;
     const targetUrl = new URL(
       sourceUrl.pathname + sourceUrl.search,
       targetOrigin
@@ -53,6 +96,7 @@ export function getPathWithLocale(
  * Get the URL of the application with the locale appended
  */
 export function getUrlWithLocale(url: string, locale?: Locale | null): string {
+  const baseUrl = getBaseUrl();
   return shouldAppendLocale(locale)
     ? `${baseUrl}/${locale}${url}`
     : `${baseUrl}${url}`;
